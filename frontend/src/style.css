@@ -1,0 +1,970 @@
+/* ==========================================
+   MANAGE.ME CLI DESIGN SYSTEM & STYLING
+   ========================================== */
+
+:root {
+  color-scheme: dark;
+  --font-mono: 'JetBrains Mono', Fira Mono, Consolas, monospace;
+
+  /* Softer, Low-Fatigue Flat Terminal Colors */
+  --bg-app: #121417;
+  --bg-surface: #191c21;
+  --bg-surface-hover: #1e2229;
+  --bg-input: #121417;
+
+  --border-color: #2b303b;
+  --border-color-focus: #3e4451;
+
+  --text-primary: #aab2c0;
+  --text-secondary: #5c6370;
+  --text-muted: #4b5263;
+
+  /* Muted Functional Colors */
+  --color-danger: #d46c75;
+  --color-danger-glow: rgba(212, 108, 117, 0.15);
+  --color-success: #87b38d;
+
+  /* Softer, desaturated Work Mode (Steel Blue - #376fab) */
+  --accent: #376fab;
+  --accent-secondary: #2b5c90;
+
+  /* Softer, desaturated Home Mode (Sage Green - #378b43) */
+  --gold-primary: #d19a66;
+  --gold-secondary: #c18a56;
+}
+
+body.mode-work {
+  --accent: #376fab;
+  --accent-secondary: #2b5c90;
+}
+
+body.mode-home {
+  --accent: #378b43;
+  --accent-secondary: #2c7236;
+}
+
+/* Reset - Instant transitions for true minimalist CLI feel */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  transition: none !important;
+  /* disable all transitions for instant list switching */
+}
+
+body {
+  font-family: var(--font-mono);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.4;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-mono);
+  font-weight: bold;
+}
+
+/* CLI Layout */
+.app-container {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 1rem 1rem 3rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Flat Panel Boxes */
+.glass-panel {
+  /* background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem; */
+}
+
+/* Header status line */
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.8rem;
+}
+
+.logo-section h1 {
+  font-size: 1.4rem;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.daily-counter {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.daily-counter.gold-tier {
+  border-color: var(--gold-primary);
+  background: rgba(209, 154, 102, 0.05);
+  color: var(--gold-primary);
+}
+
+/* Mode toggles (clean text-based look) */
+.mode-toggle-btn {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.mode-toggle-btn:hover {
+  border-color: var(--border-color-focus);
+  color: var(--text-primary);
+}
+
+.mode-toggle-btn.active-mode {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+}
+
+/* Mode Tabs (Clean full-width tab switcher with underline) */
+.mode-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.mode-tab {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.4rem 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  /* font-weight: bold; */
+  user-select: none;
+}
+
+.mode-tab .tab-text {
+  /* padding-bottom: 0.4rem; */
+  border-bottom: 2px solid transparent;
+}
+
+.mode-tab:hover {
+  color: var(--text-primary);
+}
+
+.mode-tab.active-mode {
+  color: var(--accent);
+}
+
+.mode-tab.active-mode .tab-text {
+  border-bottom-color: var(--accent);
+}
+
+.swipe-indicator {
+  display: none;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .swipe-indicator {
+    display: block;
+  }
+}
+
+/* Flat buttons */
+.btn-primary {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--accent);
+  color: var(--bg-app);
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-color-focus);
+}
+
+/* Prompt CLI Inputs */
+.input-field-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding-left: 0.8rem;
+  box-sizing: border-box;
+}
+
+.input-field-wrapper:focus-within {
+  border-color: var(--accent);
+}
+
+.prompt-symbol {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 1rem;
+  margin-right: 0.4rem;
+  user-select: none;
+}
+
+.input-field {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.6rem 0.8rem;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+}
+
+.input-field-wrapper .input-field {
+  border: none;
+  background: transparent;
+  padding: 0.6rem 0.8rem 0.6rem 0;
+}
+
+.input-field-wrapper .input-field:focus {
+  border-color: transparent;
+}
+
+.select-field {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.5rem 0.8rem;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235c6370'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 0.85rem;
+}
+
+.select-field:focus {
+  border-color: var(--accent);
+}
+
+/* Clean, standard flat square checkboxes */
+.cli-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.cli-checkbox:hover {
+  border-color: var(--accent);
+}
+
+.cli-checkbox:checked {
+  border-color: var(--accent);
+  background-color: transparent;
+}
+
+.cli-checkbox:checked::before {
+  content: "x";
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+/* Flat Task Item */
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 2.6rem;
+  padding: 0 0.9rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+  cursor: pointer;
+}
+
+.task-item:hover {
+  border-color: var(--border-color-focus);
+  background: var(--bg-surface-hover);
+}
+
+.task-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title-text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--text-primary);
+  /* Apply a linear-gradient mask to fade out on the right */
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 30px), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 30px), transparent 100%);
+}
+
+.task-item.is-completed .task-title-text {
+  color: var(--text-secondary);
+}
+
+.task-item.is-someday {
+  border-style: dashed;
+}
+
+/* Tag Badge for CLI */
+.tag-badge {
+  font-size: 0.7rem;
+  color: var(--accent);
+  border: 1px solid var(--border-color);
+  padding: 0.05rem 0.3rem;
+  border-radius: 2px;
+  margin-left: 0.4rem;
+  display: inline-block;
+  background: var(--bg-app);
+}
+
+/* Flat CLI Collapsible Tag Group - SOLID border, no dots */
+.cluster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 2.6rem;
+  padding: 0 0.9rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+  cursor: pointer;
+}
+
+.cluster-header:hover {
+  border-color: var(--border-color-focus);
+}
+
+/* Increase desktop layout density by 1/3 */
+@media (min-width: 601px) {
+
+  .task-item,
+  .cluster-header {
+    height: 2.6rem;
+    padding: 0 0.8rem;
+    padding-right: 0rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .more-actions-btn {
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.95rem;
+  }
+}
+
+.cluster-title-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cluster-icon {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.cluster-name {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.cluster-count {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.05rem 0.35rem;
+  border-radius: 2px;
+}
+
+.cluster-chevron {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-right: 0.2rem;
+}
+
+.cluster-contents {
+  margin-left: 0.8rem;
+  border-left: 1px dashed var(--border-color);
+  padding-left: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+/* CLI actions menu */
+.actions-dropdown {
+  position: relative;
+}
+
+.more-actions-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.more-actions-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 50;
+  min-width: 160px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.2rem 0;
+  margin-top: 0.15rem;
+}
+
+.dropdown-item {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  text-align: left;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-surface-hover);
+  color: var(--accent);
+}
+
+.dropdown-item.danger-action {
+  color: var(--color-danger);
+}
+
+.dropdown-item.danger-action:hover {
+  background: var(--color-danger-glow);
+}
+
+/* Flat tmux-style modal pane */
+.drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 100;
+}
+
+.task-drawer {
+  position: fixed;
+  top: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 680px;
+  height: 90vh;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  z-index: 101;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 600px) {
+  .task-drawer {
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+    top: 0;
+    left: 0;
+    transform: none;
+    padding: 1.2rem;
+  }
+}
+
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.6rem;
+}
+
+.drawer-header h3 {
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.drawer-close-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.drawer-close-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.drawer-section label {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.drawer-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* CLI Accordions */
+.advanced-options-accordion {
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: var(--bg-app);
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.advanced-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+@media (max-width: 500px) {
+  .advanced-options-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-options {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.btn-options:hover {
+  border-color: var(--border-color-focus);
+  color: var(--text-primary);
+}
+
+.btn-options.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+}
+
+.btn-options.is-active:hover {
+  background: var(--accent);
+  color: var(--bg-app);
+}
+
+.btn-add-task {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.btn-add-task:hover {
+  background: var(--accent);
+  color: var(--bg-app);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+}
+
+/* Tab selector - Scrollable single row, vertical centered text on mobile */
+.view-tabs {
+  display: flex;
+  gap: 0.2rem;
+  margin-bottom: 1rem;
+  background: var(--bg-app);
+  padding: 0.15rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  /* scroll horizontally on mobile */
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.view-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  /* vertical center */
+  justify-content: center;
+  text-align: center;
+  padding: 0.4rem 0.8rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  min-width: fit-content;
+  white-space: nowrap;
+}
+
+.view-tab:hover {
+  color: var(--text-primary);
+}
+
+.view-tab.active {
+  background: var(--bg-surface);
+  color: var(--accent);
+  border: 1px solid var(--border-color);
+}
+
+/* Custom View Toolbar */
+.active-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  width: 100%;
+}
+
+/* App layout adjustments */
+.app-container main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Schedules list item dashed border */
+.schedule-item-dashed {
+  border-style: dashed !important;
+}
+
+/* Schedule Recurrence Text styling */
+.schedule-recurrence-info {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: 0.5rem;
+}
+
+/* Completed Datetime styling */
+.completed-at-info {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: 0.5rem;
+}
+
+/* Task Due Date & Overdue styling */
+.task-date-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-right: 0.8rem;
+  white-space: nowrap;
+}
+
+.task-date-info.is-overdue {
+  color: var(--color-danger);
+}
+
+.due-icon {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Note Badge override */
+.note-badge {
+  color: var(--text-secondary);
+  border-style: dotted;
+}
+
+.freshservice-logo-badge {
+  height: 0.85rem;
+  width: auto;
+  vertical-align: middle;
+  margin: 0.4rem;
+  display: inline-block;
+}
+
+/* Star Button */
+.star-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.star-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.star-btn.is-starred {
+  color: var(--gold-primary);
+}
+
+/* Drag-and-drop Visual Cues */
+.task-item[draggable="true"],
+.cluster-header[draggable="true"] {
+  cursor: grab;
+}
+
+.task-item.is-dragging,
+.cluster-header.is-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.task-item.drag-over,
+.cluster-header.drag-over {
+  border-top: 2px dashed var(--accent) !important;
+}
+
+/* Sort Toggles in active-toolbar */
+.sort-toggles {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.sort-toggle-btn {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.sort-toggle-btn:hover {
+  border-color: var(--border-color-focus);
+  color: var(--text-primary);
+}
+
+.sort-toggle-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+}
+
+.sort-toggle-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+/* Danger actions text colors override */
+.btn-danger-text {
+  color: var(--color-danger) !important;
+}
+
+/* Created Date display */
+.task-created-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-right: 0.4rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Drag Handle styling */
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 2.6rem;
+  cursor: grab;
+  color: var(--text-secondary);
+  user-select: none;
+  flex-shrink: 0;
+  margin-left: 0.4rem;
+}
+
+.drag-handle:hover {
+  color: var(--text-primary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
