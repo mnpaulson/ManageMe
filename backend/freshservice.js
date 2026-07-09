@@ -196,3 +196,57 @@ export async function updateTicket(ticketId, status, subject, description, resol
   const data = await response.json();
   return data.ticket;
 }
+
+export async function createNote(ticketId, htmlContent) {
+  if (!isEnabled()) throw new Error('Freshservice integration is disabled');
+  const url = `https://${domain}/api/v2/tickets/${ticketId}/notes`;
+  const payload = {
+    body: htmlContent || 'Empty note',
+    private: true
+  };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const errBody = await response.text();
+    throw new Error(`Failed to create Freshservice note: ${response.status} ${response.statusText} - ${errBody}`);
+  }
+  const data = await response.json();
+  return data.conversation;
+}
+
+export async function updateNote(ticketId, noteId, htmlContent) {
+  if (!isEnabled()) throw new Error('Freshservice integration is disabled');
+  const url = `https://${domain}/api/v2/conversations/${noteId}`;
+  const payload = {
+    body: htmlContent || 'Empty note',
+    private: true
+  };
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const errBody = await response.text();
+    throw new Error(`Failed to update Freshservice note: ${response.status} ${response.statusText} - ${errBody}`);
+  }
+  const data = await response.json();
+  return data.conversation;
+}
+
+export async function deleteNote(ticketId, noteId) {
+  if (!isEnabled()) throw new Error('Freshservice integration is disabled');
+  const url = `https://${domain}/api/v2/conversations/${noteId}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: getHeaders()
+  });
+  if (!response.ok) {
+    const errBody = await response.text();
+    throw new Error(`Failed to delete Freshservice note: ${response.status} ${response.statusText} - ${errBody}`);
+  }
+  return true;
+}

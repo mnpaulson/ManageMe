@@ -246,6 +246,7 @@
       @save-schedule="handleSaveSchedule"
       @delete-task="handleDeleteTask"
       @delete-schedule="handleDeleteSchedule"
+      @show-toast="showToast"
     />
 
     <!-- Toast Overlays -->

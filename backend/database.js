@@ -70,6 +70,18 @@ async function initializeDatabase(db) {
     )
   `);
 
+  // Create task_additional_notes table
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS task_additional_notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      freshservice_note_id INTEGER,
+      FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+    )
+  `);
+
   // Safe migrations for existing databases
   try {
     await db.exec('ALTER TABLE tasks ADD COLUMN due_date TEXT');

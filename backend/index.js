@@ -219,6 +219,150 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
+// GET all additional notes for a task
+app.get('/api/tasks/:taskId/notes', async (req, res) => {
+  try {
+    const db = await getDb();
+    const { taskId } = req.params;
+    const notes = await db.all(
+      'SELECT * FROM task_additional_notes WHERE task_id = ? ORDER BY created_at DESC',
+      [taskId]
+    );
+    res.json(notes);
+  } catch (error) {
+    console.error('Error fetching additional notes:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST new additional note for a task
+app.post('/api/tasks/:taskId/notes', async (req, res) => {
+  try {
+    const db = await getDb();
+    const { taskId } = req.params;
+    const { content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const task = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId]);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const created_at = new Date().toISOString();
+    let freshserviceNoteId = null;
+
+    if (task.is_freshservice === 1 && task.freshservice_ticket_id && freshservice.isEnabled()) {
+      try {
+        const fsNote = await freshservice.createNote(task.freshservice_ticket_id, content);
+        freshserviceNoteId = fsNote.id;
+      } catch (fsErr) {
+        console.error('Failed to create private note in Freshservice:', fsErr);
+        return res.status(500).json({ error: `Freshservice sync failed: ${fsErr.message}` });
+      }
+    }
+
+    const result = await db.run(
+      `INSERT INTO task_additional_notes (task_id, content, created_at, freshservice_note_id)
+       VALUES (?, ?, ?, ?)`,
+      [taskId, content, created_at, freshserviceNoteId]
+    );
+
+    const newNote = await db.get('SELECT * FROM task_additional_notes WHERE id = ?', [result.lastID]);
+    res.status(201).json(newNote);
+  } catch (error) {
+    console.error('Error creating additional note:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// PUT update additional note
+app.put('/api/tasks/:taskId/notes/:noteId', async (req, res) => {
+  try {
+    const db = await getDb();
+    const { taskId, noteId } = req.params;
+    const { content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const note = await db.get('SELECT * FROM task_additional_notes WHERE id = ? AND task_id = ?', [noteId, taskId]);
+    if (!note) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const task = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId]);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    let freshserviceNoteId = note.freshservice_note_id;
+
+    if (task.is_freshservice === 1 && task.freshservice_ticket_id && freshservice.isEnabled()) {
+      if (freshserviceNoteId) {
+        try {
+          await freshservice.updateNote(task.freshservice_ticket_id, freshserviceNoteId, content);
+        } catch (fsErr) {
+          console.error('Failed to update note in Freshservice:', fsErr);
+          return res.status(500).json({ error: `Freshservice sync failed: ${fsErr.message}` });
+        }
+      } else {
+        try {
+          const fsNote = await freshservice.createNote(task.freshservice_ticket_id, content);
+          freshserviceNoteId = fsNote.id;
+        } catch (fsErr) {
+          console.error('Failed to sync note to Freshservice during update:', fsErr);
+          return res.status(500).json({ error: `Freshservice sync failed: ${fsErr.message}` });
+        }
+      }
+    }
+
+    await db.run(
+      'UPDATE task_additional_notes SET content = ?, freshservice_note_id = ? WHERE id = ?',
+      [content, freshserviceNoteId, noteId]
+    );
+
+    const updatedNote = await db.get('SELECT * FROM task_additional_notes WHERE id = ?', [noteId]);
+    res.json(updatedNote);
+  } catch (error) {
+    console.error('Error updating additional note:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE additional note
+app.delete('/api/tasks/:taskId/notes/:noteId', async (req, res) => {
+  try {
+    const db = await getDb();
+    const { taskId, noteId } = req.params;
+
+    const note = await db.get('SELECT * FROM task_additional_notes WHERE id = ? AND task_id = ?', [noteId, taskId]);
+    if (!note) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const task = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId]);
+
+    if (task && task.is_freshservice === 1 && task.freshservice_ticket_id && note.freshservice_note_id && freshservice.isEnabled()) {
+      try {
+        await freshservice.deleteNote(task.freshservice_ticket_id, note.freshservice_note_id);
+      } catch (fsErr) {
+        console.error('Failed to delete note in Freshservice:', fsErr);
+        return res.status(500).json({ error: `Freshservice sync failed: ${fsErr.message}` });
+      }
+    }
+
+    await db.run('DELETE FROM task_additional_notes WHERE id = ?', [noteId]);
+    res.json({ success: true, message: 'Note deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting additional note:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // ---------------- SCHEDULE ENDPOINTS ----------------
 
 // GET all schedules
@@ -445,6 +589,20 @@ app.post('/api/freshservice/sync-push/:taskId', async (req, res) => {
         'UPDATE tasks SET freshservice_ticket_id = ?, is_freshservice = 1, schedule_id = NULL WHERE id = ?',
         [ticket.id, task.id]
       );
+
+      // Push all local additional notes as private comments to the new Freshservice ticket
+      const notes = await db.all('SELECT * FROM task_additional_notes WHERE task_id = ?', [task.id]);
+      for (const note of notes) {
+        try {
+          const fsNote = await freshservice.createNote(ticket.id, note.content);
+          await db.run(
+            'UPDATE task_additional_notes SET freshservice_note_id = ? WHERE id = ?',
+            [fsNote.id, note.id]
+          );
+        } catch (fsErr) {
+          console.error(`Failed to push additional note ${note.id} to Freshservice:`, fsErr);
+        }
+      }
     } else {
       // Update existing ticket
       const status = task.completed === 1 ? 4 : (task.someday === 1 ? 3 : 2); // 4 = Resolved, 3 = Pending, 2 = Open
@@ -457,6 +615,20 @@ app.post('/api/freshservice/sync-push/:taskId', async (req, res) => {
         'UPDATE tasks SET is_freshservice = 1, schedule_id = NULL WHERE id = ?',
         [task.id]
       );
+
+      // Push any previously unsynced local additional notes as private comments to the existing ticket
+      const unsyncedNotes = await db.all('SELECT * FROM task_additional_notes WHERE task_id = ? AND freshservice_note_id IS NULL', [task.id]);
+      for (const note of unsyncedNotes) {
+        try {
+          const fsNote = await freshservice.createNote(task.freshservice_ticket_id, note.content);
+          await db.run(
+            'UPDATE task_additional_notes SET freshservice_note_id = ? WHERE id = ?',
+            [fsNote.id, note.id]
+          );
+        } catch (fsErr) {
+          console.error(`Failed to push unsynced additional note ${note.id} to Freshservice:`, fsErr);
+        }
+      }
     }
 
     const updatedTask = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId]);

@@ -117,7 +117,7 @@
 
       <!-- Task Notes (Task only) -->
       <div v-if="!isSchedule" class="drawer-section">
-        <label>Task Notes</label>
+        <label>Task Body</label>
         <div class="notes-editor-container">
           <div class="editor-toolbar">
             <button 
@@ -176,6 +176,207 @@
             </button>
           </div>
           <editor-content :editor="editor" class="notes-editor" />
+        </div>
+      </div>
+
+      <!-- Additional Notes (Task only) -->
+      <div v-if="!isSchedule" class="drawer-section" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+        <label>Additional Notes</label>
+        
+        <!-- New Note Editor Form -->
+        <div class="additional-note-form" style="margin-bottom: 1rem;">
+          <div class="notes-editor-container">
+            <div class="editor-toolbar">
+              <button 
+                type="button" 
+                class="toolbar-btn" 
+                :class="{ 'is-active': newNoteEditor && newNoteEditor.isActive('bold') }"
+                tabindex="-1"
+                @click="newNoteEditor?.chain().focus().toggleBold().run()"
+              >
+                [B]
+              </button>
+              <button 
+                type="button" 
+                class="toolbar-btn" 
+                :class="{ 'is-active': newNoteEditor && newNoteEditor.isActive('italic') }"
+                tabindex="-1"
+                @click="newNoteEditor?.chain().focus().toggleItalic().run()"
+              >
+                [I]
+              </button>
+              <button 
+                type="button" 
+                class="toolbar-btn" 
+                :class="{ 'is-active': newNoteEditor && newNoteEditor.isActive('bulletList') }"
+                tabindex="-1"
+                @click="newNoteEditor?.chain().focus().toggleBulletList().run()"
+              >
+                [• LIST]
+              </button>
+              <button 
+                type="button" 
+                class="toolbar-btn" 
+                :class="{ 'is-active': newNoteEditor && newNoteEditor.isActive('orderedList') }"
+                tabindex="-1"
+                @click="newNoteEditor?.chain().focus().toggleOrderedList().run()"
+              >
+                [1. LIST]
+              </button>
+              <button 
+                type="button" 
+                class="toolbar-btn" 
+                :class="{ 'is-active': newNoteEditor && newNoteEditor.isActive('link') }"
+                tabindex="-1"
+                @click="setNewNoteLink"
+              >
+                [LINK]
+              </button>
+              <button 
+                v-if="newNoteEditor && newNoteEditor.isActive('link')"
+                type="button" 
+                class="toolbar-btn" 
+                tabindex="-1"
+                @click="newNoteEditor?.chain().focus().unsetLink().run()"
+              >
+                [UNLINK]
+              </button>
+            </div>
+            <editor-content :editor="newNoteEditor" class="notes-editor" />
+          </div>
+          <button 
+            type="button" 
+            class="btn-primary" 
+            style="margin-top: 0.5rem; width: 100%; font-family: var(--font-mono); font-size: 0.85rem;" 
+            :disabled="isNewNoteEmpty" 
+            @click="addAdditionalNote"
+          >
+            [ADD NOTE]
+          </button>
+        </div>
+
+        <!-- Additional Notes List -->
+        <div class="additional-notes-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+          <div v-if="additionalNotes.length === 0" class="empty-notes" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); text-align: center; padding: 0.5rem; border: 1px dashed var(--border-color);">
+            No additional notes.
+          </div>
+          <div 
+            v-for="note in additionalNotes" 
+            :key="note.id" 
+            class="additional-note-item"
+          >
+            <!-- Monospace Header: Timestamp and actions -->
+            <div class="note-item-header">
+              <span>{{ formatTimestamp(note.created_at) }}</span>
+              <div style="display: flex; gap: 0.5rem;">
+                <button 
+                  v-if="editingNoteId !== note.id"
+                  type="button" 
+                  class="toolbar-btn" 
+                  style="padding: 0; color: var(--accent);" 
+                  @click="startEditingNote(note)"
+                >
+                  [EDIT]
+                </button>
+                <button 
+                  v-if="editingNoteId !== note.id"
+                  type="button" 
+                  class="toolbar-btn" 
+                  style="padding: 0; color: var(--color-danger);" 
+                  @click="deleteAdditionalNote(note.id)"
+                >
+                  [DELETE]
+                </button>
+              </div>
+            </div>
+
+            <!-- Preview / Edit State -->
+            <div v-if="editingNoteId === note.id" class="note-item-edit-container">
+              <div class="notes-editor-container">
+                <div class="editor-toolbar">
+                  <button 
+                    type="button" 
+                    class="toolbar-btn" 
+                    :class="{ 'is-active': activeNoteEditor && activeNoteEditor.isActive('bold') }"
+                    tabindex="-1"
+                    @click="activeNoteEditor?.chain().focus().toggleBold().run()"
+                  >
+                    [B]
+                  </button>
+                  <button 
+                    type="button" 
+                    class="toolbar-btn" 
+                    :class="{ 'is-active': activeNoteEditor && activeNoteEditor.isActive('italic') }"
+                    tabindex="-1"
+                    @click="activeNoteEditor?.chain().focus().toggleItalic().run()"
+                  >
+                    [I]
+                  </button>
+                  <button 
+                    type="button" 
+                    class="toolbar-btn" 
+                    :class="{ 'is-active': activeNoteEditor && activeNoteEditor.isActive('bulletList') }"
+                    tabindex="-1"
+                    @click="activeNoteEditor?.chain().focus().toggleBulletList().run()"
+                  >
+                    [• LIST]
+                  </button>
+                  <button 
+                    type="button" 
+                    class="toolbar-btn" 
+                    :class="{ 'is-active': activeNoteEditor && activeNoteEditor.isActive('orderedList') }"
+                    tabindex="-1"
+                    @click="activeNoteEditor?.chain().focus().toggleOrderedList().run()"
+                  >
+                    [1. LIST]
+                  </button>
+                  <button 
+                    type="button" 
+                    class="toolbar-btn" 
+                    :class="{ 'is-active': activeNoteEditor && activeNoteEditor.isActive('link') }"
+                    tabindex="-1"
+                    @click="setActiveNoteLink"
+                  >
+                    [LINK]
+                  </button>
+                  <button 
+                    v-if="activeNoteEditor && activeNoteEditor.isActive('link')"
+                    type="button" 
+                    class="toolbar-btn" 
+                    tabindex="-1"
+                    @click="activeNoteEditor?.chain().focus().unsetLink().run()"
+                  >
+                    [UNLINK]
+                  </button>
+                </div>
+                <editor-content :editor="activeNoteEditor" class="notes-editor" />
+              </div>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button 
+                  type="button" 
+                  class="btn-primary" 
+                  style="flex: 1; font-size: 0.8rem; padding: 0.3rem 0.6rem; font-family: var(--font-mono);" 
+                  @click="saveNoteEdit"
+                >
+                  [SAVE]
+                </button>
+                <button 
+                  type="button" 
+                  class="btn-secondary" 
+                  style="flex: 1; font-size: 0.8rem; padding: 0.3rem 0.6rem; font-family: var(--font-mono);" 
+                  @click="cancelEditingNote"
+                >
+                  [CANCEL]
+                </button>
+              </div>
+            </div>
+            <div 
+              v-else 
+              class="additional-note-content" 
+              style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4; padding-top: 0.25rem;"
+              v-html="note.content"
+            ></div>
+          </div>
         </div>
       </div>
 
@@ -295,7 +496,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { ref, computed, onBeforeUnmount, watch } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -315,7 +516,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'save-task', 'save-schedule', 'delete-task', 'delete-schedule']);
+const emit = defineEmits(['close', 'save-task', 'save-schedule', 'delete-task', 'delete-schedule', 'show-toast']);
 
 const somedayBtn = ref(null);
 const keepActiveInput = ref(null);
@@ -421,9 +622,198 @@ function setLink() {
   editor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
 }
 
+// Additional Notes State and Handlers
+const additionalNotes = ref([]);
+const editingNoteId = ref(null);
+const newNoteContent = ref('');
+
+const newNoteEditor = useEditor({
+  content: '',
+  extensions: [
+    StarterKit,
+    Link.configure({
+      openOnClick: false,
+      autolink: true,
+      HTMLAttributes: {
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        class: 'ticket-link'
+      }
+    })
+  ],
+  onUpdate: ({ editor }) => {
+    newNoteContent.value = editor.getHTML();
+  }
+});
+
+const isNewNoteEmpty = computed(() => {
+  return !newNoteEditor.value || newNoteEditor.value.isEmpty;
+});
+
+const activeNoteContent = ref('');
+const activeNoteEditor = useEditor({
+  content: '',
+  extensions: [
+    StarterKit,
+    Link.configure({
+      openOnClick: false,
+      autolink: true,
+      HTMLAttributes: {
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        class: 'ticket-link'
+      }
+    })
+  ],
+  onUpdate: ({ editor }) => {
+    activeNoteContent.value = editor.getHTML();
+  }
+});
+
+function setNewNoteLink() {
+  const previousUrl = newNoteEditor.value?.getAttributes('link').href;
+  const url = window.prompt('URL', previousUrl);
+  if (url === null) return;
+  if (url === '') {
+    newNoteEditor.value?.chain().focus().extendMarkRange('link').unsetLink().run();
+    return;
+  }
+  newNoteEditor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+}
+
+function setActiveNoteLink() {
+  const previousUrl = activeNoteEditor.value?.getAttributes('link').href;
+  const url = window.prompt('URL', previousUrl);
+  if (url === null) return;
+  if (url === '') {
+    activeNoteEditor.value?.chain().focus().extendMarkRange('link').unsetLink().run();
+    return;
+  }
+  activeNoteEditor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+}
+
+async function fetchAdditionalNotes() {
+  if (isSchedule.value || !props.item.id) {
+    additionalNotes.value = [];
+    return;
+  }
+  try {
+    const res = await fetch(`/api/tasks/${props.item.id}/notes`);
+    if (res.ok) {
+      additionalNotes.value = await res.json();
+    }
+  } catch (err) {
+    console.error('Failed to fetch additional notes:', err);
+  }
+}
+
+watch(() => props.item.id, () => {
+  fetchAdditionalNotes();
+  editingNoteId.value = null;
+  newNoteEditor.value?.commands.setContent('');
+}, { immediate: true });
+
+async function addAdditionalNote() {
+  if (isNewNoteEmpty.value) return;
+  try {
+    const res = await fetch(`/api/tasks/${props.item.id}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: newNoteContent.value })
+    });
+    if (res.ok) {
+      const newNote = await res.json();
+      additionalNotes.value.unshift(newNote);
+      newNoteEditor.value?.commands.setContent('');
+      emit('show-toast', 'Note added successfully', 'success');
+    } else {
+      const err = await res.json();
+      emit('show-toast', err.error || 'Failed to add note', 'error');
+    }
+  } catch (err) {
+    console.error('Error adding note:', err);
+    emit('show-toast', 'Error adding note', 'error');
+  }
+}
+
+function startEditingNote(note) {
+  editingNoteId.value = note.id;
+  activeNoteContent.value = note.content;
+  activeNoteEditor.value?.commands.setContent(note.content);
+}
+
+function cancelEditingNote() {
+  editingNoteId.value = null;
+}
+
+async function saveNoteEdit() {
+  if (!editingNoteId.value) return;
+  try {
+    const res = await fetch(`/api/tasks/${props.item.id}/notes/${editingNoteId.value}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: activeNoteContent.value })
+    });
+    if (res.ok) {
+      const updatedNote = await res.json();
+      const idx = additionalNotes.value.findIndex(n => n.id === updatedNote.id);
+      if (idx !== -1) {
+        additionalNotes.value[idx] = updatedNote;
+      }
+      editingNoteId.value = null;
+      emit('show-toast', 'Note updated successfully', 'success');
+    } else {
+      const err = await res.json();
+      emit('show-toast', err.error || 'Failed to update note', 'error');
+    }
+  } catch (err) {
+    console.error('Error updating note:', err);
+    emit('show-toast', 'Error updating note', 'error');
+  }
+}
+
+async function deleteAdditionalNote(noteId) {
+  if (!window.confirm('Are you sure you want to delete this note?')) return;
+  try {
+    const res = await fetch(`/api/tasks/${props.item.id}/notes/${noteId}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      additionalNotes.value = additionalNotes.value.filter(n => n.id !== noteId);
+      if (editingNoteId.value === noteId) {
+        editingNoteId.value = null;
+      }
+      emit('show-toast', 'Note deleted successfully', 'success');
+    } else {
+      const err = await res.json();
+      emit('show-toast', err.error || 'Failed to delete note', 'error');
+    }
+  } catch (err) {
+    console.error('Error deleting note:', err);
+    emit('show-toast', 'Error deleting note', 'error');
+  }
+}
+
+function formatTimestamp(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
+
 onBeforeUnmount(() => {
   if (editor.value) {
     editor.value.destroy();
+  }
+  if (newNoteEditor.value) {
+    newNoteEditor.value.destroy();
+  }
+  if (activeNoteEditor.value) {
+    activeNoteEditor.value.destroy();
   }
 });
 
@@ -501,7 +891,7 @@ function saveChanges() {
       notes: (editor.value && !editor.value.isEmpty) ? editNotes.value.trim() : null,
       is_freshservice: editMode.value === 'work' && editIsFreshservice.value ? 1 : 0,
       resolution_notes: editMode.value === 'work' && editIsFreshservice.value && editResolutionNotes.value.trim() ? editResolutionNotes.value.trim() : null,
-      requester: editMode.value === 'work' && editIsFreshservice.value && editRequester.value.trim() ? editRequester.value.trim() : null
+      requester: editMode.value === 'work' && editRequester.value.trim() ? editRequester.value.trim() : null
     };
 
     if (enableRecurrence.value && !props.item.schedule_id) {
@@ -608,5 +998,45 @@ function deleteItem() {
 }
 .ticket-link:hover {
   color: var(--accent-secondary);
+}
+.additional-note-item {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.note-item-header {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.25rem;
+}
+.additional-note-content :deep(p) {
+  margin-bottom: 0.8rem;
+}
+.additional-note-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.additional-note-content :deep(ul), 
+.additional-note-content :deep(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+.additional-note-content :deep(ul) {
+  list-style-type: disc;
+}
+.additional-note-content :deep(ol) {
+  list-style-type: decimal;
+}
+.additional-note-content :deep(a) {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>
